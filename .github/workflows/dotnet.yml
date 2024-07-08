@@ -1,0 +1,37 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@main
+    - name: Setup .NET
+      uses: actions/setup-dotnet@main
+      with:
+        global-json-file: ./global.json
+
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Services.Tests
+      run: |
+          dotnet publish tests/ProfanityFilter.Services.Tests/ &&
+          cd tests/ProfanityFilter.Services.Tests/bin/Release/net8.0/linux-x64/publish &&
+          ./ProfanityFilter.Services.Tests
+
+    - name: Action.Tests
+      run: |
+          dotnet publish tests/ProfanityFilter.Action.Tests/ &&
+          cd tests/ProfanityFilter.Action.Tests/bin/Release/net8.0/linux-x64/publish &&
+          ./ProfanityFilter.Action.Tests

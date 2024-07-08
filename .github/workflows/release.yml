@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The manual version to release'
+        required: true
+
+env:
+  IMAGE_NAME: ievangelist/profanity-filter
+  BASE_IMAGE: mcr.microsoft.com/dotnet/nightly/runtime-deps:8.0-jammy-chiseled-aot
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@main
+
+      - name: Get the version
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: echo "RELEASE_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+
+      - name: Get the version
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "RELEASE_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+
+      - uses: actions/setup-dotnet@main
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish app
+        working-directory: ./src/ProfanityFilter.Action
+        run: |
+          dotnet publish \
+            /t:PublishContainer \
+            -p DebugType=none \
+            -p ContainerBaseImage=${{ env.BASE_IMAGE }} \
+            -p ContainerRegistry=ghcr.io \
+            -p ContainerImageTags='"latest;${{ env.RELEASE_VERSION }}"' \
+            -p ContainerRepository=${{ env.IMAGE_NAME }} \
+            -bl
+
+      - uses: actions/upload-artifact@main
+        if: always()
+        with:
+          name: msbuild.binlog
+          path: src/ProfanityFilter.Action/msbuild.binlog

@@ -1,0 +1,39 @@
+name: 'Potty mouth'
+description: 'A GitHub Action profanity filter, used on issues and pull requests to automatically filter out profane content.'
+
+branding:
+  icon: 'filter'
+  color: 'red'
+
+inputs:
+  token:
+    description:
+      'The GitHub token used to update the issue or pull request. Example, secrets.GITHUB_TOKEN, with '
+    required: true
+  replacement-strategy:
+    description:
+      'The type of replacement strategy to use when profane content is filtered. See https://github.com/IEvangelist/profanity-filter#-replacement-strategies.'
+    required: false
+    default: 'asterisk'
+  include-updated-note:
+    description:
+      'Whether to include a note in the issue or pull request body indicating that the content was filtered.'
+    required: false
+    default: 'true'
+  include-confused-reaction:
+    description:
+      'Whether to include a confused reaction on the issue or pull request when profane content is filtered.'
+    required: false
+    default: 'false'
+  manual-profane-words:
+    description:
+      'A comma-separated list of additional sources to use for profanity filtering.'
+    required: false
+  custom-profane-words-url:
+    description:
+      'A URL that returns a newline-delimted list of custom words to use for profanity filtering.'
+    required: false
+
+runs:
+  using: 'docker'
+  image: 'docker://ghcr.io/ievangelist/profanity-filter:latest'
